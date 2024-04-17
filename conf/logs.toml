@@ -1,25 +1,37 @@
 [logs]
 ## just a placholder
+# api_key http模式下生效,用于鉴权, 其他模式下占位符
 api_key = "ef4ahfbwzwwtlwfpbertgq1i6mq0ab1q"
 ## enable log collect or not
+# 是否开启log-agent
 enable = false
 ## the server receive logs, http/tcp/kafka, only kafka brokers can be multiple ip:ports with concatenation character ","
+# 日志发送到哪
 send_to = "127.0.0.1:17878"
 ## send logs with protocol: http/tcp/kafka
+# 接受日志的后端类型,tcp,http,kafka
 send_type = "http"
+# 日志对应的topic ,kafka模式下生效
 topic = "flashcatcloud"
 ## send logs with compression or not 
+# 是否支持压缩, http只支持gzip压缩。 kafka支持多种压缩, 需要配合compression_codec指定。
 use_compress = false
 ## use ssl or not
+# 是否采用tls发送
 send_with_tls = false
 ## send logs in batchs
+# 批量发送的等待时间
 batch_wait = 5
 ## save offset in this path 
+# categraf 记录日志偏移的目录，需要有写权限
 run_path = "/opt/categraf/run"
 ## max files can be open 
+# 最大打开的文件数
 open_files_limit = 100
 ## scan config file in 10 seconds
+# 扫描目录的周期
 scan_period = 10
+# udp采集的帧大小
 ## read buffer of udp 
 frame_size = 9000
 
@@ -32,11 +44,15 @@ pipeline=4
 ## configuration for kafka
 ## 指定kafka版本
 kafka_version="3.3.2"
-# 默认0 表示串行,如果对日志顺序有要求,保持默认配置
+# 默认0 表示按照读取顺序串行写入kafka,如果对日志顺序有要求,保持默认配置. 
+# 当前都是stream模式, 配置为0 表示发送一条日志收到kafka ack后再写入下一条
+# 这个配置不为0 表示异步发送，一个连接上允许异步发送的最大请求个数，然后block等待, 推荐设置为100
+# 请求数
 batch_max_concurrence = 0
-# 最大并发批次, 默认100
-batch_max_size=100
-# 每次最大发送的内容上限 默认1000000
+# 发送缓冲区的大小(行数)，如果设置比chan_size小，会自动设置为跟chan_size相同 
+# 最大并发批次, 默认1000
+batch_max_size=1000
+# 每次最大发送的内容上限 默认1000000 Byte, (与batch_max_size先到者触发发送)
 batch_max_contentsize=1000000
 # client timeout in seconds
 producer_timeout= 10
@@ -53,16 +69,26 @@ sasl_version=1
 sasl_handshake = true
 # optional
 # sasl_auth_identity=""
-#
-##
+
 # v0.3.39以上版本新增,是否开启pod日志采集
+# 是否开启pod stdout/stderr日志采集
+# 设置为false，则不采集pod日志
+# 设置为true，根据 collect_container_all 决定采集所有pod,还是只打了annotation的
 enable_collect_container=false
 
-# 是否采集所有pod的stdout stderr
+# 只采集哪些pod的stdout/stderr
+container_include=[""] 
+# 排除哪些pod的stdout/stderr
+container_exclude=[""] 
+
+# 是否采集所有pod的stdout/stderr日志
+# 设置为true，无论pod annotation是否配置采集，stdout/stderr都会被采集
+# 设置为false,pod annotation是否配置采集，stdout/stderr都会被采集
 collect_container_all = true
   ## glog processing rules
   # [[logs.Processing_rules]]
   ## single log configure
+  # 日志采集配置
   [[logs.items]]
   ## file/journald/tcp/udp
   type = "file"
